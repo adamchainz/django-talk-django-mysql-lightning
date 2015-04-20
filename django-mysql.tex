@@ -102,11 +102,11 @@
 
 
 
-\begin{frame}[fragile]\frametitle{2. Database Functions}
+\begin{frame}[fragile]\frametitle{1. Database Functions}
 
     \begin{itemize}
-        \item New in Django 1.8
-        \item One place to find MySQL-only functions
+        \item New in Django 1.8!
+        \item "The" place to find MySQL-only functions
     \end{itemize}
 
 
@@ -127,7 +127,7 @@
 \begin{frame}[fragile]\frametitle{2. Named Locks}
 
     \begin{itemize}
-        \item Easy way to limit access to some resource
+        \item Easy way to limit access to a resource
         \item E.g. API with connection limit
     \end{itemize}
 
@@ -146,11 +146,11 @@ except TimeoutError:
 \begin{frame}[fragile]\frametitle{3. Approximate Count}
 
     \begin{itemize}
-        \item \texttt{Model.objects.count()} becomes \texttt{SELECT COUNT(*)}
-              which requires table scan - slow!
-        \item Various snippets and libraries out there, but this is (hopefully)
+        \item \texttt{Model.objects.count()} = \texttt{SELECT COUNT(*)}
+              which requires a table scan - slow!
+        \item Various snippets and libraries exist, but this is (hopefully)
               \textit{the best\textsuperscript{TM}}.
-        \item Easy to hook into admin
+        \item Easy to hook into external code such as admin
     \end{itemize}
 
 
@@ -168,7 +168,8 @@ except TimeoutError:
 
     \begin{itemize}
         \item Cousins to \texttt{django.contrib.postgres}'s \texttt{ArrayField}
-              - searchable with MySQL functions.
+        \item Store values in comma-separated strings, lookups and F
+              implementations using MySQL functions.
     \end{itemize}
 
 
@@ -194,34 +195,54 @@ class Person(Model):
 \begin{frame}[fragile]\frametitle{5. Smart Iteration}
 
     \begin{itemize}
-        \item Most used
+        \item Iterate and modify "big data" without fear, in primary-key-based
+              slices
+        \item Dynamically modifies slice size and checks MySQL status to avoid
+              long-running outage-causing operations
     \end{itemize}
-
 
     \begin{lstlisting}
 # Turn this...
-min_id = 0
-max_id = 1000
+min_id, max_id = 0, 1000
 max_author_id = Author.objects.order_by('-id')[0].id
 while True:
     author_slice = Author.objects.filter(
         address="Nowhere",
         id__gte=min_id,
-        id__lte=BLA BLA BLA
-    # WAY TOO MUCH CODE
+        id__lte=  # BLA BLA BLA
+    # YOU GET THE IDEA IT'S A LOT OF CODE
 
 # ...into this:
 bad_authors = Author.objects.filter(address="Nowhere")
 for author in bad_authors.iter_smart():
-    author.address = ""
-    author.save()
     author.send_apology_email()
     \end{lstlisting}
 
 \end{frame}
 
 
-\begin{frame}[fragile]\frametitle{Thank you}
+\begin{frame}[fragile]\frametitle{Coming Soon...}
+
+    \begin{itemize}
+        \item Fast DatabaseCache implementation using upserts
+        \item Dynamic Columns - MariaDB's answer to HStore/json but with extra
+              types
+        \item Migration operations for e.g. loading extensions, changing
+              table storage engine
+    \end{itemize}
+
+    \begin{center}
+        \includegraphics[width=3cm]{wow-doge}
+    \end{center}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+
+    \begin{center}
+        \includegraphics[width=10cm]{thank-you}
+    \end{center}
 
     \begin{itemize}
         \item \url{github.com/adamchainz/django-mysql}
