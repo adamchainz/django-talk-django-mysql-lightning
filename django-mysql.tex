@@ -1,0 +1,234 @@
+\documentclass{beamer}
+\usepackage{color}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\beamertemplatenavigationsymbolsempty
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{ %
+  backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+  commentstyle=\color{mygreen},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  frame=single,                    % adds a frame around the code
+  keywordstyle=\color{blue},       % keyword style
+  language=Python,                 % the language of the code
+  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % don't show spaces in strings
+  stringstyle=\color{mymauve},     % string literal style
+  title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+\hypersetup{
+    colorlinks=true,
+    urlcolor=blue
+}
+
+\graphicspath{ {./img/} {./charts/} }
+
+
+\title{Django-MySQL}
+\author{Adam Johnson - me@adamj.eu}
+\date{April 2015}
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{frame}[fragile]\frametitle{Database Share}
+
+    \begin{itemize}
+        \item Who's using PostgreSQL?
+        \item Who's using MySQL?
+    \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]\frametitle{Database Share}
+
+    \begin{itemize}
+        \item Worldwide:
+        \begin{itemize}
+            \item MySQL 56\%
+            \item MariaDB 18\% (MySQL fork!)
+            \item PostgreSQL 13\%
+        \end{itemize}
+        \item (scalebase.com)
+    \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]\frametitle{Motivation}
+
+    \begin{itemize}
+        \item Django 1.8 comes with ``django.contrib.postgres''
+        \item Hey, MySQL should have something too!
+    \end{itemize}
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]\frametitle{Mascot}
+
+    \begin{center}
+        \includegraphics[width=4.5cm]{django-pony}
+        \Huge{\textbf{+}}
+        \includegraphics[width=4.5cm]{mysql-dolphin}
+    \end{center}
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]\frametitle{Mascot}
+
+    \begin{center}
+        \includegraphics[height=6cm]{django-mysql-dolphin-pony}
+    \end{center}
+
+    \begin{center}
+        \textit{It can't be unseen.}
+    \end{center}
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]\frametitle{2. Database Functions}
+
+    \begin{itemize}
+        \item New in Django 1.8
+        \item One place to find MySQL-only functions
+    \end{itemize}
+
+
+    \begin{lstlisting}
+>>> Author.objects.filter(
+...     fewest_sales=Least('sales_eu', 'sales_us')
+... )
+>>> Author.objects.annotate(
+...     full_name=ConcatWS('first_name',
+...                        'last_name',
+...                        separator=' ')
+..  )
+    \end{lstlisting}
+
+\end{frame}
+
+
+\begin{frame}[fragile]\frametitle{2. Named Locks}
+
+    \begin{itemize}
+        \item Easy way to limit access to some resource
+        \item E.g. API with connection limit
+    \end{itemize}
+
+
+    \begin{lstlisting}
+try:
+    with Lock('my_unique_name', acquire_timeout=2.0):
+        mutually_exclusive_process()
+except TimeoutError:
+    print "Could not get the lock"
+    \end{lstlisting}
+
+\end{frame}
+
+
+\begin{frame}[fragile]\frametitle{3. Approximate Count}
+
+    \begin{itemize}
+        \item \texttt{Model.objects.count()} becomes \texttt{SELECT COUNT(*)}
+              which requires table scan - slow!
+        \item Various snippets and libraries out there, but this is (hopefully)
+              \textit{the best\textsuperscript{TM}}.
+        \item Easy to hook into admin
+    \end{itemize}
+
+
+    \begin{lstlisting}
+>>> Author.objects.count()  # slow
+509741
+>>> Author.objects.approx_count()  # fast, some error
+531140
+    \end{lstlisting}
+
+\end{frame}
+
+
+\begin{frame}[fragile]\frametitle{4. List and Set Fields}
+
+    \begin{itemize}
+        \item Cousins to \texttt{django.contrib.postgres}'s \texttt{ArrayField}
+              - searchable with MySQL functions.
+    \end{itemize}
+
+
+    \begin{lstlisting}
+# models
+class Person(Model):
+    post_nominals = ListTextField(
+        base_field=CharField(max_length=32)
+    )
+
+# shell
+>>> Person.objects.create(
+...     name='Horatio',
+...     post_nominals=['PhD', 'Esq.', 'III']
+... )
+>>> Person.objects.filter(post_nominals__contains='PhD')
+[<Person: Horatio>]
+    \end{lstlisting}
+
+\end{frame}
+
+
+\begin{frame}[fragile]\frametitle{5. Smart Iteration}
+
+    \begin{itemize}
+        \item Most used
+    \end{itemize}
+
+
+    \begin{lstlisting}
+# Turn this...
+min_id = 0
+max_id = 1000
+max_author_id = Author.objects.order_by('-id')[0].id
+while True:
+    author_slice = Author.objects.filter(
+        address="Nowhere",
+        id__gte=min_id,
+        id__lte=BLA BLA BLA
+    # WAY TOO MUCH CODE
+
+# ...into this:
+bad_authors = Author.objects.filter(address="Nowhere")
+for author in bad_authors.iter_smart():
+    author.address = ""
+    author.save()
+    author.send_apology_email()
+    \end{lstlisting}
+
+\end{frame}
+
+
+\begin{frame}[fragile]\frametitle{Thank you}
+
+    \begin{itemize}
+        \item \url{github.com/adamchainz/django-mysql}
+        \item \url{me@adamj.eu}
+    \end{itemize}
+
+\end{frame}
+
+
+\end{document}
