@@ -32,7 +32,7 @@
 
 \title{Django-MySQL}
 \author{Adam Johnson - me@adamj.eu}
-\date{April 2015}
+\date{12 May 2015}
 
 \begin{document}
 
@@ -53,7 +53,7 @@
 \begin{frame}[fragile]\frametitle{Database Share}
 
     \begin{itemize}
-        \item Worldwide:
+        \item Worldwide, of open source databases:
         \begin{itemize}
             \item MySQL 56\%
             \item MariaDB 18\% (MySQL fork!)
@@ -70,6 +70,7 @@
     \begin{itemize}
         \item Django 1.8 comes with ``django.contrib.postgres''
         \item Hey, MySQL should have something too!
+        \item Separate library = more thorough testing, multiple django versions supported
     \end{itemize}
 
 \end{frame}
@@ -111,14 +112,14 @@
 
 
     \begin{lstlisting}
->>> Author.objects.filter(
-...     fewest_sales=Least('sales_eu', 'sales_us')
-... )
 >>> Author.objects.annotate(
 ...     full_name=ConcatWS('first_name',
 ...                        'last_name',
 ...                        separator=' ')
 ..  )
+>>> Author.objects.order_by(
+...     Field('gender', ['male', 'female'])
+... )
     \end{lstlisting}
 
 \end{frame}
@@ -221,14 +222,46 @@ for author in bad_authors.iter_smart():
 \end{frame}
 
 
+\begin{frame}[fragile]\frametitle{6. Cache Backend}
+
+    \begin{itemize}
+        \item DatabaseCache is slow, too generic
+        \item Make use of MySQL's upsert syntax so that each operation only takes one query
+        \item Does automatic compression with zlib, like pylibmc
+        \item And many other improvements
+    \end{itemize}
+
+    \begin{center}
+        \includegraphics[width=6cm]{cache-all-the-things}
+    \end{center}
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]\frametitle{7. Migration Operations}
+
+    \begin{itemize}
+        \item \textbf{InstallPlugin} - Installs a plugin
+        \item \textbf{InstallSOName} - Installs every plugin in a library file
+        \item \textbf{AlterStorageEngine} - Alters a table's storage engine
+    \end{itemize}
+
+    \begin{center}
+        \includegraphics[width=8cm]{what-if-i-told-you}
+    \end{center}
+
+\end{frame}
+
+
 \begin{frame}[fragile]\frametitle{Coming Soon...}
 
     \begin{itemize}
-        \item Fast DatabaseCache implementation using upserts
         \item Dynamic Columns - MariaDB's answer to HStore/json but with extra
               types
-        \item Migration operations for e.g. loading extensions, changing
-              table storage engine
+        \item Query hints in the ORM like \textbf{STRAIGHT\_JOIN}
+        \item Migration -> \textbf{pt-online-schema-change} rewriter
+        \item 37 Github Issues open!
     \end{itemize}
 
     \begin{center}
@@ -246,6 +279,7 @@ for author in bad_authors.iter_smart():
 
     \begin{itemize}
         \item \url{github.com/adamchainz/django-mysql}
+        \item Contributors wanted!
         \item \url{me@adamj.eu}
     \end{itemize}
 
